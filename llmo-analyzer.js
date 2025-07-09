@@ -48,7 +48,7 @@ function extractLLMOContent() {
     });
   }
 
-  // Priority 2: H1 tags // Idealy there is only one H1 in the page as title, I left this because there are many complex scenarios, you can just make weight 0.001 and move on.
+  // Priority 2: H1 tags //Ideally, there is only one H1 in the page as the title, but it can be different from the <title> tag. I left this because there are many complex scenarios; you can just make the weight 0.001 or something else and move on.
   const h1s = document.querySelectorAll('h1');
   h1s.forEach((h1, idx) => {
     const text = h1.textContent.trim();
