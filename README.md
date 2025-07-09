@@ -87,7 +87,7 @@ RECOMMENDATIONS:
 
 ## 📘 Research Backing
 
-This script is modeled after proven benchmarks:
+This script is modeled after "mentioned" benchmarks:
 - **+7.5% NDCG@10 gain** from batched vs. pointwise LLM scoring (GPT-4o) // Legal batch
 - 2.77x boost in visibility when placed 1st in LLM context window (C‑SEO Bench) // Retail domains!
 
