@@ -69,7 +69,7 @@ RECOMMENDATIONS:
 
 ## 📐 How It Works (Brief)
 
-- Simulates **Batched Pointwise (PW)** evaluation from research — passing up to 30 key passages in one structured Gemini prompt.
+- Simulates **Batched Pointwise (PW)** evaluation from research — passing up to 100 key passages in one structured Gemini prompt.
 - Weighted scoring reflects traditional SEO prioritization (e.g., `<title>` > `<h1>` > `<p>`).
 - Results reflect Gemini’s understanding of how LLMs rank pages semantically.
 
