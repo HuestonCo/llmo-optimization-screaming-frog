@@ -1,6 +1,6 @@
 # 🧠 LLM Optimization Analyzer for Screaming Frog (with Gemini API)
 
-A custom JavaScript-based analyzer for Screaming Frog that evaluates webpages for Large Language Model Optimization (LLMO) using the **Gemini 1.5 Flash API**.
+A custom JavaScript-based analyzer for Screaming Frog that evaluates webpages for Large Language Model Optimization (LLMO) using the **Gemini 1.5 Flash API**. The script is using a Batched Pairwise approach.
 
 Inspired by recent research:
 - [Batched Self-Consistency Improves LLM Relevance Assessment and Ranking](https://arxiv.org/abs/2505.12570)
