@@ -38,7 +38,7 @@ Then, it generates a comprehensive prompt for Gemini to:
 3. Paste the full `llmo-analyzer.js` script
 4. Enable **JavaScript Rendering** under `Configuration → Spider → Rendering`
 5. Run your crawl
-6. View `Custom Extraction` output tab for Gemini-powered LLMO insights
+6. View `Custom Javascript` output tab for Gemini-powered LLMO insights
 
 ---
 
