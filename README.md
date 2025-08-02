@@ -96,6 +96,12 @@ New report sections include:
 4. **Competitive Intelligence**: Understand your position vs industry standards
 5. **Editorial Guidelines**: Use metrics to guide content creation
 
-## 📈 Example Output Differences
+## 🛠️ Installation
 
-### Original Output:
+Same as original - paste into Screaming Frog's Custom JavaScript feature with your Gemini API key.
+
+## 📝 Credits
+
+- Original concept and base code by [Metehan Yesilyurt](https://github.com/metehan777) check out his [orgional blog post here](https://metehan.ai/blog/llm-optimization-analyzer-screaming-frog/)
+-Updated by the [Hueston LLMO Team](https://hueston.co)
+
