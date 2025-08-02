@@ -2,7 +2,7 @@
 
 # Enhanced LLMO Analyzer For Screaming Frog 
 
-A significantly enhanced version of the original [LLMO Optimization Analyzer](https://github.com/metehan777/llmo-optimization-screaming-frog) that goes beyond basic LLM scoring to provide comprehensive AI search optimization analysis.
+A forked version of the original [LLMO Optimization Analyzer](https://github.com/metehan777/llmo-optimization-screaming-frog) - update to go beyond basic LLM scoring to provide comprehensive AI search optimization analysis.
 
 ## 🚀 What's New in This Enhanced Version
 
