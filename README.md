@@ -101,6 +101,10 @@ New report sections include:
 ## 🛠️ Installation
 
 Same as original - paste into Screaming Frog's Custom JavaScript feature with your Gemini API key.
+<tr>
+    <td><img src="https://i.ibb.co/whHCh7wb/Screaming-frog-llmo.png" alt="Original"></td>
+    <td><img src="https://i.ibb.co/WWXBY08M/screaming-frog-llmo2.png" alt="Enhanced"></td>
+</tr>
 
 ## 📝 Credits
 
