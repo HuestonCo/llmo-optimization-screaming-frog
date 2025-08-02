@@ -1,4 +1,4 @@
-![Hueston Logo](https://hueston.co/wp-content/uploads/hueston-light-logo-80px.svg)
+[![Hueston Logo](https://hueston.co/wp-content/uploads/hueston-light-logo-80px.svg)](https://hueston.co)
 
 # Enhanced LLMO Analyzer For Screaming Frog 
 
@@ -101,9 +101,7 @@ New report sections include:
 ## 🛠️ Installation
 
 Same as original - paste into Screaming Frog's Custom JavaScript feature with your Gemini API key.
-![Original LLMO Analyzer](https://i.ibb.co/whHCh7wb/Screaming-frog-llmo.png)
 
-![Enhanced LLMO Analyzer](https://i.ibb.co/WWXBY08M/screaming-frog-llmo2.png)
 
 ## 📝 Credits
 
