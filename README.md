@@ -1,3 +1,5 @@
+![Hueston Logo](https://hueston.co/wp-content/uploads/hueston-light-logo-80px.svg)
+
 # Enhanced LLMO Analyzer with Comprehensive AI Search Optimization
 
 A significantly enhanced version of the original [LLMO Optimization Analyzer](https://github.com/metehan777/llmo-optimization-screaming-frog) that goes beyond basic LLM scoring to provide comprehensive AI search optimization analysis.
@@ -102,6 +104,10 @@ Same as original - paste into Screaming Frog's Custom JavaScript feature with yo
 
 ## 📝 Credits
 
-- Original concept and base code by [Metehan Yesilyurt](https://github.com/metehan777) check out his [orgional blog post here](https://metehan.ai/blog/llm-optimization-analyzer-screaming-frog/)
--Updated by the [Hueston LLMO Team](https://hueston.co)
+- Original concept and base code by [Metehan Yesilyurt](https://github.com/metehan777)
+- check out his [orgional blog post here](https://metehan.ai/blog/llm-optimization-analyzer-screaming-frog/)
+- Updated by the [Hueston LLMO Team](https://hueston.co)
+
+
+
 
