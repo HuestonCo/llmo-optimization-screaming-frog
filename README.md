@@ -107,7 +107,7 @@ Same as original - paste into Screaming Frog's Custom JavaScript feature with yo
 
 - Original concept and base code by [Metehan Yesilyurt](https://github.com/metehan777)
 - check out his [orgional blog post here](https://metehan.ai/blog/llm-optimization-analyzer-screaming-frog/)
-- Updated by the [Hueston LLMO Team](https://hueston.co)
+- Updated by the [Hueston LLMO Team](https://hueston.co) @ [Robin Adams](https://www.linkedin.com/in/robin-adams-buffalo-seo/)
 
 
 
