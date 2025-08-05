@@ -1,7 +1,7 @@
 // Enhanced LLMO Universal Analyzer for Screaming Frog with Gemini API by metehan.ai (Metehan Yesilyurt) 
 // Updated by Hueston.co 
-// Replace with your actual Gemini API key
-const apiKey = 'xx-xx';
+
+const apiKey = 'YOUR_API_KEY_HERE';
 
 // Configuration
 const CONFIG = {
@@ -9,7 +9,9 @@ const CONFIG = {
   MIN_WORDS: 10,
   MAX_CHUNK_LENGTH: 500,
   API_TEMPERATURE: 0.2,
-  MAX_OUTPUT_TOKENS: 4096
+  MAX_OUTPUT_TOKENS: 4096,
+  MIN_WORD_COUNT: 100, // Skip pages with less than 100 words
+  SKIP_PATTERNS: ['/tag/', '/author/', '/page/', '?', '#'] // URL patterns to skip
 };
 
 // LLM Optimization Patterns
@@ -395,6 +397,7 @@ function extractLLMOContent() {
   
   // Check for review opportunities in text
   let reviewOpportunityCount = 0;
+  const bodyText = document.body.textContent.toLowerCase();
   if (SCHEMA_PATTERNS.Review.reviewOpportunities) {
     SCHEMA_PATTERNS.Review.reviewOpportunities.forEach(pattern => {
       if (bodyText.includes(pattern)) {
@@ -408,7 +411,6 @@ function extractLLMOContent() {
   content.stats.word_count = document.body.textContent.split(/\s+/).filter(word => word.length > 0).length;
 
   // Analyze LLM optimization signals
-  const bodyText = document.body.textContent.toLowerCase();
   const allParagraphs = document.querySelectorAll('p');
   
   // Direct answer detection
@@ -520,13 +522,13 @@ function extractLLMOContent() {
     }
   });
   
-  // Lists quality
-  const lists = document.querySelectorAll('ul, ol');
+  // Lists quality - FIXED: renamed variable to avoid duplicate declaration
+  const listElements = document.querySelectorAll('ul, ol');
   let listItemsTotal = 0;
-  lists.forEach(list => {
+  listElements.forEach(list => {
     listItemsTotal += list.querySelectorAll('li').length;
   });
-  content.llm_signals.answer_engine.lists_quality_score = lists.length > 0 ? Math.min(100, (listItemsTotal / lists.length) * 10) : 0;
+  content.llm_signals.answer_engine.lists_quality_score = listElements.length > 0 ? Math.min(100, (listItemsTotal / listElements.length) * 10) : 0;
   
   // Interactive elements
   const interactive = document.querySelectorAll('button, input, select, textarea, iframe, video, audio, .calculator, .tool, .quiz');
@@ -603,6 +605,7 @@ function extractLLMOContent() {
   content.llm_signals.semantic_coverage.related_concepts = content.llm_signals.semantic_coverage.unique_terms.size;
   
   // Check for schema type indicators including local patterns
+  const htmlContent = document.documentElement.innerHTML.toLowerCase();
   for (const [schemaType, config] of Object.entries(SCHEMA_PATTERNS)) {
     let indicatorCount = 0;
     config.indicators.forEach(indicator => {
@@ -687,7 +690,33 @@ function detectContentType(content) {
   return 'general';
 }
 
+// Helper function to format raw JSON with proper indentation
+function formatRawJson(jsonString) {
+  try {
+    const parsed = JSON.parse(jsonString);
+    return JSON.stringify(parsed, null, 2);
+  } catch (e) {
+    // If parsing fails, return original string
+    return jsonString;
+  }
+}
+
 try {
+  // Pre-checks to skip low-value pages
+  const url = window.location.href;
+  const bodyText = document.body.textContent.trim();
+  const wordCount = bodyText.split(/\s+/).filter(word => word.length > 0).length;
+  
+  // Skip if URL contains patterns we want to ignore
+  if (CONFIG.SKIP_PATTERNS.some(pattern => url.includes(pattern))) {
+    return seoSpider.data('=== SKIPPED: URL contains excluded pattern ===\n\n' + '='.repeat(80) + '\n\n');
+  }
+  
+  // Skip if page has too little content
+  if (wordCount < CONFIG.MIN_WORD_COUNT) {
+    return seoSpider.data(`=== SKIPPED: Insufficient content (${wordCount} words) ===\n\n` + '='.repeat(80) + '\n\n');
+  }
+  
   const content = extractLLMOContent();
   const contentType = detectContentType(content);
 
@@ -1007,7 +1036,7 @@ OUTPUT FORMAT (JSON):
         }
         
         // ROI Analysis
-        if (analysis.roi_analysis) {
+        if (analysis.roi_analysis && analysis.roi_analysis.estimated_traffic_increase_percent) {
           output += '=== ROI ANALYSIS ===\n';
           output += `Estimated Traffic Increase: +${analysis.roi_analysis.estimated_traffic_increase_percent}%\n`;
           output += `Implementation Hours: ${analysis.roi_analysis.total_implementation_hours}\n`;
@@ -1016,7 +1045,7 @@ OUTPUT FORMAT (JSON):
         }
         
         // Industry Benchmark
-        if (analysis.schema_analysis && analysis.schema_analysis.industry_benchmark) {
+        if (analysis.schema_analysis && analysis.schema_analysis.industry_benchmark && analysis.schema_analysis.industry_benchmark.average) {
           const benchmark = analysis.schema_analysis.industry_benchmark;
           output += '=== INDUSTRY SCHEMA BENCHMARK ===\n';
           output += `Industry Average: ${benchmark.average} schemas\n`;
@@ -1055,56 +1084,81 @@ OUTPUT FORMAT (JSON):
         
         // Schema implementation status
         output += '=== SCHEMA IMPLEMENTATION STATUS ===\n';
-        output += `✅ IMPLEMENTED: ${analysis.schema_analysis.implemented_count} schemas\n`;
+        if (analysis.schema_analysis) {
+          output += `✅ IMPLEMENTED: ${analysis.schema_analysis.implemented_count} schemas\n`;
+          
+          if (analysis.schema_analysis.implemented_schemas && analysis.schema_analysis.implemented_schemas.length > 0) {
+            if (typeof analysis.schema_analysis.implemented_schemas[0] === 'string') {
+              // Handle simple string array
+              analysis.schema_analysis.implemented_schemas.forEach(s => {
+                output += `  - ${s}\n`;
+              });
+            } else {
+              // Handle object array
+              analysis.schema_analysis.implemented_schemas.forEach(s => {
+                output += `  - ${s.type} (${s.completeness_score}% complete)\n`;
+                if (s.validation_issues && s.validation_issues.length > 0) {
+                  output += `    ⚠️ Issues: ${s.validation_issues.join(', ')}\n`;
+                }
+              });
+            }
+          }
+          
+          // Schema conflicts
+          if (analysis.schema_analysis.schema_conflicts && analysis.schema_analysis.schema_conflicts.length > 0) {
+            output += '\n⚠️ SCHEMA CONFLICTS:\n';
+            analysis.schema_analysis.schema_conflicts.forEach(conflict => {
+              output += `  - ${conflict}\n`;
+            });
+          }
+          
+          output += `\n❌ MISSING OPPORTUNITIES: ${analysis.schema_analysis.total_opportunities - analysis.schema_analysis.implemented_count} schemas\n`;
+          
+          // High priority missing schemas
+          if (analysis.schema_analysis.missing_schemas && analysis.schema_analysis.missing_schemas.length > 0) {
+            const criticalSchemas = analysis.schema_analysis.missing_schemas.filter(s => 
+              typeof s === 'object' && (s.priority === 'CRITICAL' || s.priority === 'HIGH')
+            );
+            if (criticalSchemas.length > 0) {
+              output += '\nHIGH-VALUE MISSING SCHEMAS:\n';
+              criticalSchemas.forEach(s => {
+                output += `  - ${s.type} (${s.priority})\n`;
+                if (s.supporting_content) output += `    → ${s.supporting_content}\n`;
+                if (s.expected_impact) output += `    → Impact: ${s.expected_impact}\n`;
+              });
+            } else if (analysis.schema_analysis.missing_schemas.length > 0) {
+              // Handle simple string array
+              output += '\nMISSING SCHEMAS:\n';
+              const schemasToShow = analysis.schema_analysis.missing_schemas.slice(0, 5);
+              schemasToShow.forEach(s => {
+                output += `  - ${typeof s === 'string' ? s : s.type || s}\n`;
+              });
+            }
+          }
+        }
         
-        if (analysis.schema_analysis.implemented_schemas.length > 0) {
-          analysis.schema_analysis.implemented_schemas.forEach(s => {
-            output += `  - ${s.type} (${s.completeness_score}% complete)\n`;
-            if (s.validation_issues && s.validation_issues.length > 0) {
-              output += `    ⚠️ Issues: ${s.validation_issues.join(', ')}\n`;
+        // Content-Schema alignment (if exists)
+        if (analysis.content_schema_alignment) {
+          output += '\n=== CONTENT-SCHEMA ALIGNMENT ===\n';
+          output += `Content Richness: ${analysis.content_schema_alignment.content_richness}%\n`;
+          output += `Schema Coverage: ${analysis.content_schema_alignment.schema_coverage}%\n`;
+          output += `Untapped Potential: ${analysis.content_schema_alignment.alignment_gap}%\n`;
+        }
+        
+        // Target queries with comprehensive scoring
+        if (analysis.target_queries && analysis.target_queries.length > 0) {
+          output += '\n=== TARGET QUERIES & COMPREHENSIVE IMPACT ===\n';
+          analysis.target_queries.slice(0, 5).forEach((q, idx) => {
+            output += `${idx + 1}. "${q.query}"\n`;
+            output += `   Current Score: ${q.current_score}/5 → Potential: ${q.potential_score_with_optimization || q.potential_score_with_schemas}/5\n`;
+            if (q.answer_quality) {
+              output += `   Answer Quality: ${q.answer_quality}\n`;
+            }
+            if (q.limiting_factors && q.limiting_factors.length > 0) {
+              output += `   Limited by: ${q.limiting_factors.join(', ')}\n`;
             }
           });
         }
-        
-        // Schema conflicts
-        if (analysis.schema_analysis.schema_conflicts && analysis.schema_analysis.schema_conflicts.length > 0) {
-          output += '\n⚠️ SCHEMA CONFLICTS:\n';
-          analysis.schema_analysis.schema_conflicts.forEach(conflict => {
-            output += `  - ${conflict}\n`;
-          });
-        }
-        
-        output += `\n❌ MISSING OPPORTUNITIES: ${analysis.schema_analysis.total_opportunities - analysis.schema_analysis.implemented_count} schemas\n`;
-        
-        // High priority missing schemas
-        const criticalSchemas = analysis.schema_analysis.missing_schemas.filter(s => s.priority === 'CRITICAL' || s.priority === 'HIGH');
-        if (criticalSchemas.length > 0) {
-          output += '\nHIGH-VALUE MISSING SCHEMAS:\n';
-          criticalSchemas.forEach(s => {
-            output += `  - ${s.type} (${s.priority})\n`;
-            output += `    → ${s.supporting_content}\n`;
-            output += `    → Impact: ${s.expected_impact}\n`;
-          });
-        }
-        
-        // Content-Schema alignment
-        output += '\n=== CONTENT-SCHEMA ALIGNMENT ===\n';
-        output += `Content Richness: ${analysis.content_schema_alignment.content_richness}%\n`;
-        output += `Schema Coverage: ${analysis.content_schema_alignment.schema_coverage}%\n`;
-        output += `Untapped Potential: ${analysis.content_schema_alignment.alignment_gap}%\n`;
-        
-        // Target queries with comprehensive scoring
-        output += '\n=== TARGET QUERIES & COMPREHENSIVE IMPACT ===\n';
-        analysis.target_queries.slice(0, 5).forEach((q, idx) => {
-          output += `${idx + 1}. "${q.query}"\n`;
-          output += `   Current Score: ${q.current_score}/5 → Potential: ${q.potential_score_with_optimization || q.potential_score_with_schemas}/5\n`;
-          if (q.answer_quality) {
-            output += `   Answer Quality: ${q.answer_quality}\n`;
-          }
-          if (q.limiting_factors && q.limiting_factors.length > 0) {
-            output += `   Limited by: ${q.limiting_factors.join(', ')}\n`;
-          }
-        });
         
         // Generated FAQs
         if (analysis.generated_faqs && analysis.generated_faqs.length > 0) {
@@ -1115,7 +1169,7 @@ OUTPUT FORMAT (JSON):
           });
         }
         
-        // Review Strategy
+        // Review Strategy (if exists)
         if (analysis.review_strategy) {
           output += '\n=== REVIEW SCHEMA STRATEGY ===\n';
           if (analysis.review_strategy.testimonial_conversion) {
@@ -1133,35 +1187,46 @@ OUTPUT FORMAT (JSON):
         if (analysis.optimization_roadmap && analysis.optimization_roadmap.content_additions && analysis.optimization_roadmap.content_additions.length > 0) {
           output += '\n=== CONTENT ADDITIONS NEEDED ===\n';
           analysis.optimization_roadmap.content_additions.forEach(addition => {
-            output += `• ${addition}\n`;
+            if (typeof addition === 'string') {
+              output += `• ${addition}\n`;
+            } else if (addition.issue) {
+              output += `• ${addition.issue}: ${addition.fix}\n`;
+            }
           });
         }
         
-        // Schema implementation roadmap
-        output += '\n=== SCHEMA IMPLEMENTATION ROADMAP ===\n';
-        if (analysis.schema_implementation_roadmap.immediate.length > 0) {
-          output += 'IMMEDIATE (Do Today):\n';
-          analysis.schema_implementation_roadmap.immediate.forEach(action => {
-            output += `• ${action}\n`;
-          });
-        }
-        
-        if (analysis.schema_implementation_roadmap.high_priority.length > 0) {
-          output += '\nHIGH PRIORITY (This Week):\n';
-          analysis.schema_implementation_roadmap.high_priority.forEach(action => {
-            output += `• ${action}\n`;
-          });
+        // Schema implementation roadmap (if exists)
+        if (analysis.schema_implementation_roadmap) {
+          output += '\n=== SCHEMA IMPLEMENTATION ROADMAP ===\n';
+          if (analysis.schema_implementation_roadmap.immediate && analysis.schema_implementation_roadmap.immediate.length > 0) {
+            output += 'IMMEDIATE (Do Today):\n';
+            analysis.schema_implementation_roadmap.immediate.forEach(action => {
+              output += `• ${action}\n`;
+            });
+          }
+          
+          if (analysis.schema_implementation_roadmap.high_priority && analysis.schema_implementation_roadmap.high_priority.length > 0) {
+            output += '\nHIGH PRIORITY (This Week):\n';
+            analysis.schema_implementation_roadmap.high_priority.forEach(action => {
+              output += `• ${action}\n`;
+            });
+          }
         }
         
         // Key recommendations with effort/impact
-        output += '\n=== TOP RECOMMENDATIONS ===\n';
-        analysis.key_recommendations.slice(0, 5).forEach((rec, idx) => {
-          output += `${idx + 1}. ${rec.action}\n`;
-          output += `   Effort: ${rec.effort} | Impact: ${rec.impact}\n`;
-          if (rec.details) {
-            output += `   Details: ${rec.details}\n`;
-          }
-        });
+        if (analysis.key_recommendations && analysis.key_recommendations.length > 0) {
+          output += '\n=== TOP RECOMMENDATIONS ===\n';
+          analysis.key_recommendations.slice(0, 5).forEach((rec, idx) => {
+            if (typeof rec === 'string') {
+              output += `${idx + 1}. ${rec}\n`;
+            } else if (rec.action) {
+              output += `${idx + 1}. ${rec.action}\n`;
+              if (rec.effort) output += `   Effort: ${rec.effort}`;
+              if (rec.impact) output += ` | Impact: ${rec.impact}\n`;
+              if (rec.details) output += `   Details: ${rec.details}\n`;
+            }
+          });
+        }
         
         // Comprehensive Page Statistics
         output += '\n=== COMPREHENSIVE PAGE STATISTICS ===\n';
@@ -1190,13 +1255,17 @@ OUTPUT FORMAT (JSON):
         output += `• Content Type: ${contentType}\n`;
         
         // Store raw JSON for custom extractions
-        output += `\n\n=== RAW JSON DATA ===\n${analysisText}`;
+        output += `\n\n=== RAW JSON DATA ===\n${JSON.stringify(analysis, null, 2)}`;
+        
+        // Add separator for better readability in bulk exports
+        output += '\n\n' + '='.repeat(80) + '\n\n';
         
         return seoSpider.data(output);
         
       } catch (parseError) {
-        // If JSON parsing fails, return the raw response
-        return seoSpider.data('=== LLMO ANALYSIS (RAW) ===\n\n' + analysisText);
+        // If JSON parsing fails, return the raw response with better formatting
+        const formattedJson = formatRawJson(analysisText);
+        return seoSpider.data('=== LLMO ANALYSIS (RAW) ===\n\n' + formattedJson + '\n\n' + '='.repeat(80) + '\n\n');
       }
     } else {
       return seoSpider.error('Invalid Gemini API response structure');
