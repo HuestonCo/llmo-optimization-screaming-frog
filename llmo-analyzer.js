@@ -38,8 +38,21 @@ const SCHEMA_PATTERNS = {
   FAQPage: {
     required: ['mainEntity'],
     valuable: ['author', 'datePublished'],
-    indicators: ['frequently asked', 'faq', 'questions', 'q:', 'a:', '?'],
-    impliedIndicators: ['how do', 'what is', 'when should', 'why choose', 'benefits of', 'difference between', 'cost of', 'how much', 'do you', 'can i', 'what are']
+    // Removed '?' to avoid universal matches and false positives
+    indicators: ['frequently asked', 'faq', 'questions', 'q:', 'a:'],
+    // Switch to boundary-aware regex patterns (as strings) for implied question starters
+    impliedIndicators: [
+      '\\b(?:what|why|how|when|where|who|which)\\b',
+      '\\bhow (?:do|does|to|much|many)\\b',
+      '\\bwhat (?:is|are)\\b',
+      '\\bwhen (?:should|do|does|is|are)\\b',
+      '\\bwhy (?:is|are|choose|do|does|should)\\b',
+      '\\bcan (?:i|you|we)\\b',
+      '\\bdo (?:you|i|we)\\b',
+      '\\bbenefits of\\b',
+      '\\bdifference between\\b',
+      '\\bcost of\\b'
+    ]
   },
   Article: {
     required: ['headline', 'image', 'datePublished'],
@@ -360,7 +373,8 @@ function extractLLMOContent() {
       // Extract Q&A pairs
       elements.forEach((el, idx) => {
         const text = el.textContent.trim();
-        if (text && text.includes('?')) {
+        const isLikelyQuestion = /(?:^|\s)(what|why|how|when|where|who|which|can|do|does|is|are|should)\b[\s\S]{2,120}\?/i.test(text);
+        if (text && isLikelyQuestion) {
           content.passages.push({
             type: 'faq',
             text: text.substring(0, CONFIG.MAX_CHUNK_LENGTH),
@@ -616,9 +630,18 @@ function extractLLMOContent() {
     
     // Check for additional pattern types
     if (config.impliedIndicators) {
-      config.impliedIndicators.forEach(indicator => {
-        if (bodyText.includes(indicator)) {
-          indicatorCount++;
+      config.impliedIndicators.forEach(pattern => {
+        try {
+          const re = new RegExp(pattern, 'gi');
+          const matches = bodyText.match(re);
+          if (matches) {
+            indicatorCount += matches.length; // count all occurrences
+          }
+        } catch (e) {
+          // Fallback to substring match if pattern is not a valid regex
+          if (bodyText.includes(pattern)) {
+            indicatorCount++;
+          }
         }
       });
     }

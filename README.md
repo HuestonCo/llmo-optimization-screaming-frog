@@ -103,6 +103,7 @@ New report sections include:
 Same as original - paste into Screaming Frog's Custom JavaScript feature with your Gemini API key.
 
 
+
 ## 📝 Credits
 
 - Original concept and base code by [Metehan Yesilyurt](https://github.com/metehan777)
@@ -110,5 +111,6 @@ Same as original - paste into Screaming Frog's Custom JavaScript feature with yo
 - Updated by the [Hueston LLMO Team](https://hueston.co) @ [Robin Adams](https://www.linkedin.com/in/robin-adams-buffalo-seo/)
 
 
+## Updates
 
-
+08-08-2025 - Tightened FAQ detection: removed '?' from indicators and used regex word-boundary question starters to reduce false positives.
