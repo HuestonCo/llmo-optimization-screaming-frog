@@ -1,4 +1,4 @@
-// Enhanced LLMO Universal Analyzer for Screaming Frog with Gemini API by metehan.ai (Metehan Yesilyurt) 
+// Enhanced LLMO Universal Analyzer for Screaming Frog with Gemini API by Hueston 
 // Updated by Hueston.co 
 
 const apiKey = 'YOUR_API_KEY_HERE';
