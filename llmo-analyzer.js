@@ -1,7 +1,7 @@
 // Enhanced LLMO Universal Analyzer for Screaming Frog with Gemini API by Hueston 
 // Updated by Hueston.co 
 
-const apiKey = 'YOUR_API_KEY_HERE';
+const apiKey = 'YOUR_GEMINI_API_KEY';
 
 // Configuration
 const CONFIG = {
@@ -971,16 +971,58 @@ OUTPUT FORMAT (JSON):
   };
 
   const xhr = new XMLHttpRequest();
-  xhr.open('POST', `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, false);
+  xhr.open('POST', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, false);
   xhr.setRequestHeader('Content-Type', 'application/json');
 
   xhr.send(JSON.stringify(requestData));
 
   if (xhr.status === 200) {
-    const response = JSON.parse(xhr.responseText);
+    let response;
+    try {
+      response = JSON.parse(xhr.responseText);
+    } catch (parseError) {
+      return seoSpider.error('Failed to parse API response: ' + parseError.toString() + '\n\nRaw response: ' + xhr.responseText.substring(0, 500));
+    }
 
-    if (response.candidates && response.candidates[0] && response.candidates[0].content) {
-      const analysisText = response.candidates[0].content.parts[0].text;
+    // Check for API response structure with detailed error handling
+    if (!response) {
+      return seoSpider.error('Response is null or undefined');
+    }
+    
+    if (!response.candidates) {
+      return seoSpider.error('No candidates in response. Full response: ' + JSON.stringify(response).substring(0, 1000));
+    }
+    
+    if (!Array.isArray(response.candidates) || response.candidates.length === 0) {
+      return seoSpider.error('Candidates is not an array or is empty. Response: ' + JSON.stringify(response).substring(0, 1000));
+    }
+    
+    const candidate = response.candidates[0];
+    if (!candidate) {
+      return seoSpider.error('First candidate is undefined');
+    }
+    
+    if (!candidate.content) {
+      return seoSpider.error('Candidate has no content. Candidate: ' + JSON.stringify(candidate).substring(0, 500));
+    }
+    
+    if (!candidate.content.parts) {
+      return seoSpider.error('Content has no parts. Content: ' + JSON.stringify(candidate.content).substring(0, 500));
+    }
+    
+    if (!Array.isArray(candidate.content.parts) || candidate.content.parts.length === 0) {
+      return seoSpider.error('Parts is not an array or is empty. Content: ' + JSON.stringify(candidate.content).substring(0, 500));
+    }
+    
+    const firstPart = candidate.content.parts[0];
+    if (!firstPart) {
+      return seoSpider.error('First part is undefined');
+    }
+    
+    const analysisText = firstPart.text;
+    if (!analysisText) {
+      return seoSpider.error('Text is empty or undefined. Part: ' + JSON.stringify(firstPart).substring(0, 500));
+    }
       
       try {
         const analysis = JSON.parse(analysisText);
@@ -1287,12 +1329,8 @@ OUTPUT FORMAT (JSON):
         
       } catch (parseError) {
         // If JSON parsing fails, return the raw response with better formatting
-        const formattedJson = formatRawJson(analysisText);
-        return seoSpider.data('=== LLMO ANALYSIS (RAW) ===\n\n' + formattedJson + '\n\n' + '='.repeat(80) + '\n\n');
+        return seoSpider.data('=== LLMO ANALYSIS (RAW) ===\n\nParse Error: ' + parseError.toString() + '\n\n' + analysisText.substring(0, 1000) + '\n\n' + '='.repeat(80) + '\n\n');
       }
-    } else {
-      return seoSpider.error('Invalid Gemini API response structure');
-    }
   } else {
     const errorBody = xhr.responseText;
     return seoSpider.error(`API Error ${xhr.status}: ${errorBody}`);
